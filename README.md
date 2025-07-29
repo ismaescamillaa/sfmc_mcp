@@ -1,11 +1,11 @@
 # sfmc_mcp
 
-Este proyecto es un MCP (Micro Copilot Plugin) para Salesforce Marketing Cloud.
+This project is an MCP (Micro Copilot Plugin) for Salesforce Marketing Cloud.
 
-## Funcionalidad
-- Consultar Data Extensions
-- Crear Data Extensions
-- Actualizar Data Extensions
-- Borrar Data Extensions
+## Features
+- Query Data Extensions
+- Create Data Extensions
+- Update Data Extensions
+- Delete Data Extensions
 
-Próximamente se agregarán más detalles de uso y configuración.
+More usage and configuration details will be added soon.
