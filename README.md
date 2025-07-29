@@ -1,6 +1,6 @@
 # sfmc_mcp
 
-This project is an MCP (Micro Copilot Plugin) for Salesforce Marketing Cloud.
+MCP for Salesforce Marketing Cloud.
 
 ## Features
 - Query Data Extensions
