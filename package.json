@@ -1,0 +1,31 @@
+{
+  "name": "sfmc_mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MCP tool for Salesforce Marketing Cloud.",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "mcp",
+    "sfmc",
+    "salesforce",
+    "marketing",
+    "cloud"
+  ],
+  "author": "alan.delacanal",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.0",
+    "axios": "^1.11.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "typescript": "^5.8.3"
+  },
+  "files": [
+    "build"
+  ]
+}
