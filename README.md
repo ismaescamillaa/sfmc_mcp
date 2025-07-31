@@ -3,24 +3,33 @@
 MCP for Salesforce Marketing Cloud.
 
 ## Features
+Data Extensions:
 - Query Data Extensions
-- Create Data Extensions
-- Update Data Extensions
-- Delete Data Extensions
+- Query Data of a Specific Data Extension
+- Get Fields of a Data Extentions
 
 More usage and configuration details will be added soon.
 
+## To run in your local windows local machine (Powershell)
+1- Install depences:
+npm install
 
-## To run in your local windows local machine (Powershell) 
-$env:SFMC_CLIENT_ID="tuClientId"
-$env:SFMC_CLIENT_SECRET="tuClientSecret"
-$env:SFMC_AUTH_BASE_URI="https://YOUR_SUBDOMAIN.auth.marketingcloudapis.com"
-$env:SFMC_REST_BASE_URI="https://YOUR_SUBDOMAIN.rest.marketingcloudapis.com"
-npx -y tsx ./src/index.ts
+2- Build MCP:
+npm run build
 
-## Using Inspector run in your Windows local machine (Powershell) 
-$env:SFMC_CLIENT_ID="tuClientId"
-$env:SFMC_CLIENT_SECRET="tuClientSecret"
-$env:SFMC_AUTH_BASE_URI="https://YOUR_SUBDOMAIN.auth.marketingcloudapis.com"
-$env:SFMC_REST_BASE_URI="https://YOUR_SUBDOMAIN.rest.marketingcloudapis.com"
-npx -y @modelcontextprotocol/inspector npx -y tsx file:///C:/wks/my/Projects/mcps/sfmc_mcp/src/index.ts
+3- Add in you MCP Client the SFMC Server (VSCode, Cloude Desktop, etc):
+{
+"mcpServers": {
+  "sfmc": {
+    "command": "node",
+    "args": [ "C:\\wks\\my\\Projects\\mcps\\sfmc_mcp\\build\\index.js" ],
+    "env": {
+      "SFMC_CLIENT_ID": "********",
+      "SFMC_CLIENT_SECRET": "*******",
+      "SFMC_AUTH_BASE_URI": "https://yourdomain.auth.marketingcloudapis.com",
+      "SFMC_REST_BASE_URI": "https://yourdomain.rest.marketingcloudapis.com"
+    }
+  }
+}
+}
+
