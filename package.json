@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "type": "module",
   "description": "MCP tool for Salesforce Marketing Cloud.",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "start": "node build/server.js"
   },
   "keywords": [
     "mcp",
@@ -17,11 +18,15 @@
   "author": "alan.delacanal",
   "license": "ISC",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.0",
+    "@modelcontextprotocol/sdk": "^1.17.1",
     "axios": "^1.11.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "uuid": "^11.1.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/express": "^5.0.3",
     "@types/node": "^24.1.0",
     "typescript": "^5.8.3"
   },
