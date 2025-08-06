@@ -6,6 +6,7 @@ import { z } from "zod";
 import { SFMCAPIService } from "./sfmc_api.js";
 import { registerDataExtensionTools } from "./sfmc_data_extension_tools.js";
 import { registerAssetTools } from "./sfmc_asset_tools.js";
+import { registerCampaignTools } from "./sfmc_campaign_tools.js";
 import { Request, Response } from "express";
 import dotenv from "dotenv";
 
@@ -51,13 +52,15 @@ function getServer()
     if (sfmcConfig.proxy) {
     console.error(`Using proxy: ${sfmcConfig.proxy}`);
     }
-
-
+    
     // Register Data Extension tools
     registerDataExtensionTools(server, sfmcClient);
 
     // Register Asset tools
     registerAssetTools(server, sfmcClient);
+
+    // Register Campaign tools
+    registerCampaignTools(server, sfmcClient);
 
     return server;
 }
