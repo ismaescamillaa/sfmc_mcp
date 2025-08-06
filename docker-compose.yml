@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  # Production MCP server: uses compiled build, no hot-reload
+  mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+    ports:
+      - "${HOST_PORT_PROD:-3510}:3000"  # expose container 3000 on host 3510 by default
+    env_file: 
+      - .env
+    environment:
+      - NODE_ENV=production
+    # no volumes: uses the baked image
+    command: ["node", "build/server.js"]
