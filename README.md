@@ -12,10 +12,10 @@ Assets:
 More usage and configuration details will be added soon.
 
 ## To run in your local windows (Powershell)
-1- Install depences:
+- Install depences:
 npm install
 
-2- Build MCP:
+- Build MCP:
 npm run build
 
 3- Add in you MCP Client the SFMC Server (VSCode, Cloude Desktop, etc), you also could use .env file:
@@ -36,20 +36,19 @@ npm run build
 }
 
 ### To run in server mode
-1- Configure .env, setup MCP_TRANSPORT="stream" and MCP_WS_PORT="4042".
-2- Run "npm run build"
-3- Run "npm start"
-4- Use Inspector to validate:
-4.1- Run "npx @modelcontextprotocol/inspector"
-4.2- On MCP inspector web, select the transport type: "Stremable HTTP"
-4.3- Set the your local server URL: e.g. "http://localhost:4042/mcp"
-5- To configure your MCP 
+- Configure .env, setup MCP_TRANSPORT="stream" and MCP_WS_PORT="4042".
+- Run "npm run build"
+- Run "npm start"
+- Use Inspector to validate:
+  - Run "npx @modelcontextprotocol/inspector"
+  - On MCP inspector web, select the transport type: "Stremable HTTP"
+  - Set the your local server URL: e.g. "http://localhost:4042/mcp"
+- To configure your MCP 
   "sfmc": {
     "url": "http://localhost:4042/mcp",
   }
 
 ### To run Docker for remote MCP Server
-1- configure .env
-
-2- docker compose up --build
+- Configure .env
+- docker compose up --build
 
