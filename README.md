@@ -7,6 +7,7 @@ Data Extensions:
 - Query Data Extensions
 - Query Data of a Specific Data Extension
 - Get Fields of a Data Extentions
+Assets:
 
 More usage and configuration details will be added soon.
 
@@ -23,7 +24,7 @@ npm run build
   "mcpServers": {
     "sfmc": {
       "command": "node",
-      "args": [ "C:\\wks\\my\\Projects\\mcps\\sfmc_mcp\\build\\index.js" ],
+      "args": [ "C:\\wks\\my\\Projects\\mcps\\sfmc_mcp\\build\\server.js" ],
       "env": {
         "SFMC_CLIENT_ID": "********",
         "SFMC_CLIENT_SECRET": "*******",

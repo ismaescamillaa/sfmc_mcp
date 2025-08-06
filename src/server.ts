@@ -8,7 +8,8 @@ import { Request, Response } from "express";
 import dotenv from "dotenv";
 
 dotenv.config();
-    
+
+// This function initializes the MCP server with tools for interacting with Salesforce Marketing Cloud (SFMC).
 function getServer()
 {
     // Create server instance
@@ -179,52 +180,14 @@ function getServer()
     return server;
 }
 
-const app = express();
-app.use(express.json());
 
-app.post("/mcp", async (req: Request, res: Response) => {
-    try {
-        const server = getServer();
-        const transport = new StreamableHTTPServerTransport({
-                sessionIdGenerator: undefined,
-        });
-
-        res.on("close", () => {
-            console.log("Client disconnected, closing transport");
-            transport.close();
-            server.close();
-        });
-
-        await server.connect(transport);
-        await transport.handleRequest(req, res, req.body);
-    } catch (error: any) {
-        console.error("Error processing request:", error);
-        if(!res.headersSent) {
-            res.status(500).json({
-                jsonrpc: "2.0",
-                error: {
-                    code: -32603,
-                    message: "Internal Server Error"
-                },
-                id:null
-            });
-        }
-       
-    }
-});
-
-const port = process.env.MCP_WS_PORT || 3000;
-app.listen(port, () => {
-    console.error(`SFMC MCP Server listening on port ${port}`);
-});
-
-// Start the server
-/*async function main() {
+// Start the server with StdioServerTransport for local development
+function startStdioServer() {
     try {
         console.error("Starting SFMC MCP Server...");
-     
+        var server = getServer();
         const transport = new StdioServerTransport();
-        await server.connect(transport);
+        server.connect(transport);
         
         console.error("SFMC MCP Server running");
     }
@@ -233,8 +196,55 @@ app.listen(port, () => {
         process.exit(1);
     }
 }
-    */
 
+// Start the server with StreamableHTTPServerTransport for server
+function startStreamableHTTPServer() {
+    // Create an Express application
+    const app = express();
+    app.use(express.json());
 
-//main();
+    app.post("/mcp", async (req: Request, res: Response) => {
+        try {
+            const server = getServer();
+            const transport = new StreamableHTTPServerTransport({
+                    sessionIdGenerator: undefined,
+            });
 
+            res.on("close", () => {
+                console.log("Client disconnected, closing transport");
+                transport.close();
+                server.close();
+            });
+
+            await server.connect(transport);
+            await transport.handleRequest(req, res, req.body);
+        } catch (error: any) {
+            console.error("Error processing request:", error);
+            if(!res.headersSent) {
+                res.status(500).json({
+                    jsonrpc: "2.0",
+                    error: {
+                        code: -32603,
+                        message: "Internal Server Error"
+                    },
+                    id:null
+                });
+            }
+        
+        }
+    });
+
+    const port = process.env.MCP_WS_PORT || 3000;
+    app.listen(port, () => {
+        console.error(`SFMC MCP Server listening on port ${port}`);
+    });
+}
+
+if (process.env.MCP_TRANSPORT === "stream") {
+    // Start the server with StreamableHTTPServerTransport
+    startStreamableHTTPServer();
+}
+else {
+    // Start the server with StdioServerTransport for local development
+    startStdioServer();
+}
