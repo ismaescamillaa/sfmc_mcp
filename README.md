@@ -52,3 +52,13 @@ npm run build
 - Configure .env
 - docker compose up --build
 
+## .env looks like:
+
+SFMC_CLIENT_ID="******"
+SFMC_CLIENT_SECRET="****"
+SFMC_AUTH_BASE_URI="https://yourdomain.auth.marketingcloudapis.com"
+SFMC_REST_BASE_URI="https://yourdomain.rest.marketingcloudapis.com"
+MCP_TRANSPORT="stdio" # stream or "stdio" for local development
+MCP_WS_PORT="3000"
+
+
