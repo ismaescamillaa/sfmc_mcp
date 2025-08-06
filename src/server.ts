@@ -4,6 +4,9 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import express from "express";
 import { z } from "zod";
 import { SFMCAPIService } from "./sfmc_api.js";
+import { registerDataExtensionTools } from "./sfmc_data_extension_tools.js";
+import { registerAssetTools } from "./sfmc_asset_tools.js";
+import { registerCampaignTools } from "./sfmc_campaign_tools.js";
 import { Request, Response } from "express";
 import dotenv from "dotenv";
 
@@ -11,6 +14,9 @@ dotenv.config();
 
 // This function initializes the MCP server with tools for interacting with Salesforce Marketing Cloud (SFMC).
 function getServer()
+    // Tool to get the list of Assets from Marketing Cloud
+    // This tool allows you to fetch the list of Assets in the account.
+    // More information: https://developer.salesforce.com/docs/marketing/marketing-cloud/references/mc_rest_assets/assetSimpleQuery.html
 {
     // Create server instance
     const server = new McpServer({
@@ -46,136 +52,15 @@ function getServer()
     if (sfmcConfig.proxy) {
     console.error(`Using proxy: ${sfmcConfig.proxy}`);
     }
+    
+    // Register Data Extension tools
+    registerDataExtensionTools(server, sfmcClient);
 
-    // Tool to get the list of Data Extensions
-    // This tool allows you to fetch the list of Data Extensions in the account.
-    // More information: https://developer.salesforce.com/docs/marketing/marketing-cloud/references/mc-custom_objects?meta=getDataExtensions
-    server.tool("sfmc_list_data_extensions", "Get list of Data Extensions", {
-    search: z.string().describe("Search term to filter Data Extensions"),
-    page: z.number().optional().describe("Page number for pagination"),
-    pageSize: z.number().optional().describe("Page size for pagination (default: 50)"),
-    }, async ({ search, page, pageSize }) => {
-    try {
-    // Construct the endpoint
-    const endpoint = `/data/v1/customobjects`;
+    // Register Asset tools
+    registerAssetTools(server, sfmcClient);
 
-    // Construct parameters
-    const parameters: Record<string, string | number> = {};
-    parameters.$search = search;
-
-    if (page) parameters.$page = page;
-    if (pageSize) parameters.$pageSize = pageSize;
-
-    // Make the request
-    const result = await sfmcClient.getData(endpoint, parameters);
-
-    return {
-        content: [
-            {
-                type: "text",
-                text: JSON.stringify(result, null, 2),
-            },
-        ],
-    };
-    }
-    catch (error: any) {
-    console.error(`ERROR getting list of Data Extensions:`, error);
-    return {
-        content: [
-            {
-                type: "text",
-                text: `Error: ${error.message}`,
-            },
-        ],
-        isError: true,
-    };
-    }
-    });
-
-
-    // Tool to get rows from a SFMC Data Extension by key
-    // This tool allows you to fetch rows from a specific Data Extension using its external key. 
-    server.tool("sfmc_get_data_extension", "Get rows from a SFMC Data Extension by key", {
-    key: z.string().describe("External key of the Data Extension"),
-    filter: z.string().optional().describe("Optional filter expression"),
-    fields: z.array(z.string()).optional().describe("Fields to return (leave empty for all fields)"),
-    orderBy: z.string().optional().describe("Field to order by"),
-    page: z.number().optional().describe("Page number for pagination"),
-    pageSize: z.number().optional().describe("Page size for pagination (default: 50)"),
-    }, async ({ key, filter, fields, orderBy, page, pageSize }) => {
-    try {
-    // Construct the endpoint
-    const endpoint = `/data/v1/customobjectdata/key/${key}/rowset`;
-
-    // Construct parameters
-    const parameters: Record<string, string | number | boolean> = {};
-    if (filter) parameters.$filter = filter;
-    if (fields && fields.length > 0) parameters.$fields = fields.join(',');
-    if (orderBy) parameters.$orderBy = orderBy;
-    if (page) parameters.$page = page;
-    if (pageSize) parameters.$pageSize = pageSize;
-
-    // Make the request
-    const result = await sfmcClient.getData(endpoint, parameters);
-
-    return {
-        content: [
-            {
-                type: "text",
-                text: JSON.stringify(result, null, 2),
-            },
-        ],
-    };
-    }
-    catch (error: any) {
-    console.error(`ERROR getting data from Data Extension ${key}:`, error);
-    return {
-        content: [
-            {
-                type: "text",
-                text: `Error: ${error.message}`,
-            },
-        ],
-        isError: true,
-    };
-    }
-    });
-
-    // Tool to get fields from a SFMC Data Extension by id
-    // This tool allows you to fetch the fields of a specific Data Extension using its id.
-    // More information can be found in the SFMC documentation: https://developer.salesforce.com/docs/marketing/marketing-cloud/references/mc-custom_objects?meta=getDataExtensionFields
-    server.tool("sfmc_get_data_extension_fields", "Get fields from a SFMC Data Extension by id", {
-    id: z.string().describe("Id of the Data Extension"),
-    }, async ({ id }) => {
-    try {
-    // Construct the endpoint for fields
-    const endpoint = `/data/v1/customobjects/${id}/fields`;
-
-    // Make the request
-    const result = await sfmcClient.getData(endpoint);
-
-    return {
-        content: [
-            {
-                type: "text",
-                text: JSON.stringify(result, null, 2),
-            },
-        ],
-    };
-    }
-    catch (error: any) {
-    console.error(`ERROR getting fields from Data Extension ${id}:`, error);
-    return {
-        content: [
-            {
-                type: "text",
-                text: `Error: ${error.message}`,
-            },
-        ],
-        isError: true,
-    };
-    }
-    });
+    // Register Campaign tools
+    registerCampaignTools(server, sfmcClient);
 
     return server;
 }

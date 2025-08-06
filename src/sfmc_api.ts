@@ -1,17 +1,22 @@
+
+/**
+ * SFMCAPIService provides a wrapper for authenticating and making REST API requests to Salesforce Marketing Cloud (SFMC).
+ * Handles token management, proxy configuration, and error handling for robust integration.
+ */
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import https from 'https';
 
 // Export the interface so it can be imported in index.ts
 export interface SFMCConfig {
-    clientId: string;
-    clientSecret: string;
-    authBaseUri: string;
-    restBaseUri: string;
-    accountId?: string;
-    proxy?: string;
+    clientId: string; // SFMC API client ID
+    clientSecret: string; // SFMC API client secret
+    authBaseUri: string; // Base URI for authentication
+    restBaseUri: string; // Base URI for REST API calls
+    accountId?: string; // Optional: MID/account ID for authentication
+    proxy?: string; // Optional: Proxy URL (e.g., http://proxy:8080)
     // Optional: SSL configuration options
-    rejectUnauthorized?: boolean;
-    certPath?: string;
+    rejectUnauthorized?: boolean; // Whether to reject unauthorized SSL certs
+    certPath?: string; // Path to custom SSL certificate
 }
 
 export class SFMCAPIService {
@@ -20,23 +25,26 @@ export class SFMCAPIService {
     private accessToken: string | null = null;
     private tokenExpiration: Date | null = null;
 
+    /**
+     * Initialize the SFMC API service with configuration.
+     * Sets up Axios instance with optional proxy and SSL settings.
+     */
     constructor(config: SFMCConfig) {
         this.config = config;
 
-        // Create axios instance with simpler configuration
+        // Create axios instance with base headers and optional proxy/SSL config
         this.axiosInstance = axios.create({
             headers: {
                 'Content-Type': 'application/json',
             },
-            // Use a simpler HTTPS agent configuration
+            // For production, always validate SSL certificates
             httpsAgent: new https.Agent({
-                // For production systems, always enable proper certificate validation
                 rejectUnauthorized: true
             }),
             proxy: this.createProxyConfig(this.config.proxy),
         });
 
-        // Log if proxy is being used
+        // Log if proxy is being used for transparency
         if (config.proxy) {
             console.error(`Using proxy for SFMC API requests: ${config.proxy}`);
         }
@@ -44,6 +52,10 @@ export class SFMCAPIService {
 
     /**
      * Convert proxy string to Axios proxy config
+     */
+    /**
+     * Convert a proxy URL string to Axios proxy config object.
+     * Returns undefined if no proxy is set or if the URL is invalid.
      */
     private createProxyConfig(proxyUrl?: string): AxiosRequestConfig['proxy'] {
         if (!proxyUrl)
@@ -65,25 +77,30 @@ export class SFMCAPIService {
     /**
      * Get an access token for SFMC API
      */
+    /**
+     * Retrieve an OAuth access token for SFMC API requests.
+     * Caches the token until expiration to avoid unnecessary requests.
+     * Throws detailed errors if authentication fails.
+     */
     async getAccessToken(): Promise<string> {
-        // Return existing token if it's still valid
+        // Return cached token if still valid
         if (this.accessToken && this.tokenExpiration && this.tokenExpiration > new Date()) {
             return this.accessToken;
         }
         try {
-            // Use the same structure as the working Node.js example
+            // Prepare authentication request body
             const requestBody: Record<string, string> = {
                 grant_type: 'client_credentials',
                 client_id: this.config.clientId,
                 client_secret: this.config.clientSecret,
             };
 
-            // Add account_id only if it's provided in config
+            // Optionally add account_id if provided
             if (this.config.accountId) {
                 requestBody.account_id = this.config.accountId;
             }
             
-            // Use the class's axiosInstance with predefined config
+            // Request token from SFMC auth endpoint
             const response = await this.axiosInstance.post(
                 `${this.config.authBaseUri}/v2/token`, 
                 requestBody,
@@ -96,7 +113,7 @@ export class SFMCAPIService {
             
             this.accessToken = response.data.access_token;
             
-            // Set expiration time (usually 20 minutes, subtracting 60 seconds for safety)
+            // Set expiration time (subtract 60s for safety margin)
             const expiresInSeconds = response.data.expires_in || 1140; // Default to 19 minutes
             this.tokenExpiration = new Date(Date.now() + (expiresInSeconds - 60) * 1000);
             
@@ -106,7 +123,7 @@ export class SFMCAPIService {
             return this.accessToken;
         }
         catch (error: any) {
-            // Log error information for debugging
+            // Log error details for debugging
             if (error.response) {
                 console.error(`SFMC Auth Error - Status: ${error.response.status}`);
                 console.error('Response:', JSON.stringify(error.response.data, null, 2));
@@ -118,7 +135,7 @@ export class SFMCAPIService {
                 console.error('Error details:', error.message);
             }
             
-            // Throw the original error message instead of a generic one
+            // Throw the original error message for transparency
             if (error.response && error.response.data) {
                 throw new Error(`SFMC Authentication Error: ${JSON.stringify(error.response.data)}`);
             }
@@ -134,6 +151,15 @@ export class SFMCAPIService {
     /**
      * Make a request to the SFMC REST API
      */
+    /**
+     * Make a REST API request to SFMC.
+     * Handles token injection, endpoint formatting, and error reporting.
+     * @param method HTTP method (get, post, put, patch, delete)
+     * @param endpoint REST endpoint (relative or absolute URL)
+     * @param data Optional request body for POST/PUT/PATCH
+     * @param parameters Optional query parameters
+     * @returns Response data from SFMC
+     */
     async makeRequest<T = any>(
         method: string, 
         endpoint: string, 
@@ -143,7 +169,7 @@ export class SFMCAPIService {
         try {
             const accessToken = await this.getAccessToken();
             
-            // Make sure the endpoint has the correct format
+            // Ensure endpoint is absolute
             const url = endpoint.startsWith('http') ? 
                 endpoint : 
                 `${this.config.restBaseUri}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
@@ -158,6 +184,7 @@ export class SFMCAPIService {
                 params: parameters
             };
             
+            // Attach data for write operations
             if (data && (method.toLowerCase() === 'post' || method.toLowerCase() === 'put' || method.toLowerCase() === 'patch')) {
                 config.data = data;
             }
@@ -166,6 +193,7 @@ export class SFMCAPIService {
             return response.data;
         }
         catch (error: any) {
+            // Log and rethrow errors with details for easier debugging
             console.error(`Error making SFMC API request to ${endpoint}:`);
             if (error.response) {
                 console.error(`Status: ${error.response.status}`);
@@ -186,6 +214,12 @@ export class SFMCAPIService {
     /**
      * Get SFMC data from a REST endpoint (GET request)
      */
+    /**
+     * Perform a GET request to a SFMC REST endpoint.
+     * @param endpoint REST endpoint (relative or absolute URL)
+     * @param parameters Optional query parameters
+     * @returns Response data from SFMC
+     */
     async getData<T = any>(endpoint: string, parameters?: Record<string, string | number | boolean>): Promise<T> {
         return this.makeRequest<T>('get', endpoint, undefined, parameters);
     }
@@ -193,12 +227,27 @@ export class SFMCAPIService {
     /**
      * Create SFMC data (POST request)
      */
+    /**
+     * Perform a POST request to create data in SFMC.
+     * @param endpoint REST endpoint
+     * @param data Request body
+     * @param parameters Optional query parameters
+     * @returns Response data from SFMC
+     */
     async createData<T = any>(endpoint: string, data: any, parameters?: Record<string, string | number | boolean>): Promise<T> {
         return this.makeRequest<T>('post', endpoint, data, parameters);
     }
 
     /**
      * Update SFMC data (PUT/PATCH request)
+     */
+    /**
+     * Perform a PUT or PATCH request to update data in SFMC.
+     * @param endpoint REST endpoint
+     * @param data Request body
+     * @param parameters Optional query parameters
+     * @param method HTTP method ('put' or 'patch')
+     * @returns Response data from SFMC
      */
     async updateData<T = any>(
         endpoint: string, 
@@ -211,6 +260,12 @@ export class SFMCAPIService {
 
     /**
      * Delete SFMC data (DELETE request)
+     */
+    /**
+     * Perform a DELETE request to remove data from SFMC.
+     * @param endpoint REST endpoint
+     * @param parameters Optional query parameters
+     * @returns Response data from SFMC
      */
     async deleteData<T = any>(endpoint: string, parameters?: Record<string, string | number | boolean>): Promise<T> {
         return this.makeRequest<T>('delete', endpoint, undefined, parameters);
