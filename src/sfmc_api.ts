@@ -5,6 +5,7 @@
  */
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import https from 'https';
+import { XMLParser } from 'fast-xml-parser';
 
 // Export the interface so it can be imported in index.ts
 export interface SFMCConfig {
@@ -269,5 +270,85 @@ export class SFMCAPIService {
      */
     async deleteData<T = any>(endpoint: string, parameters?: Record<string, string | number | boolean>): Promise<T> {
         return this.makeRequest<T>('delete', endpoint, undefined, parameters);
+    }
+
+    private getSoapEndpoint(): string {
+        return this.config.authBaseUri
+            .replace('.auth.', '.soap.')
+            .replace(/\/?$/, '') + '/Service.asmx';
+    }
+
+    async soapRetrieve(
+        objectType: string,
+        properties: string[],
+        filter: { property: string; operator: string; value: string | number }
+    ): Promise<any[]> {
+        try {
+            const token = await this.getAccessToken();
+            const soapEndpoint = this.getSoapEndpoint();
+
+            const propsXml = properties
+                .map(p => `        <ns:Properties>${p}</ns:Properties>`)
+                .join('\n');
+
+            const envelope = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns="http://exacttarget.com/wsdl/partnerAPI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <soapenv:Header>
+    <fueloauth xmlns="http://exacttarget.com">${token}</fueloauth>
+  </soapenv:Header>
+  <soapenv:Body>
+    <ns:RetrieveRequestMsg>
+      <ns:RetrieveRequest>
+        <ns:ObjectType>${objectType}</ns:ObjectType>
+${propsXml}
+        <ns:Filter xsi:type="ns:SimpleFilterPart">
+          <ns:Property>${filter.property}</ns:Property>
+          <ns:SimpleOperator>${filter.operator}</ns:SimpleOperator>
+          <ns:Value>${filter.value}</ns:Value>
+        </ns:Filter>
+      </ns:RetrieveRequest>
+    </ns:RetrieveRequestMsg>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+            const response = await this.axiosInstance.post(soapEndpoint, envelope, {
+                headers: {
+                    'Content-Type': 'text/xml; charset=utf-8',
+                    'SOAPAction': 'Retrieve',
+                },
+            });
+
+            const parser = new XMLParser({
+                removeNSPrefix: true,
+                parseTagValue: true,
+                isArray: (name) => name === 'Results',
+            });
+
+            const parsed = parser.parse(response.data as string);
+            const msg = parsed?.Envelope?.Body?.RetrieveResponseMsg;
+
+            if (!msg) {
+                throw new Error('Unexpected SOAP response structure');
+            }
+
+            const status: string = msg.OverallStatus;
+            if (status && status !== 'OK' && status !== 'MoreDataAvailable') {
+                throw new Error(`SFMC SOAP error: ${status}${msg.OverallStatusMessage ? ' - ' + msg.OverallStatusMessage : ''}`);
+            }
+
+            return msg.Results ?? [];
+        } catch (error: any) {
+            console.error(`Error making SFMC SOAP Retrieve for ${objectType}:`);
+            if (error.response) {
+                console.error(`Status: ${error.response.status}`);
+                console.error('Response:', String(error.response.data).slice(0, 500));
+                throw new Error(`SFMC SOAP error (${error.response.status}): ${String(error.response.data).slice(0, 200)}`);
+            } else if (error.request) {
+                console.error('No response received (possible network issue)');
+                throw new Error('SFMC SOAP request failed: No response received');
+            } else {
+                throw new Error(`SFMC SOAP request failed: ${error.message}`);
+            }
+        }
     }
 }

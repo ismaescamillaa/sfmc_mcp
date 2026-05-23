@@ -7,6 +7,7 @@ import { SFMCAPIService } from "./sfmc_api.js";
 import { registerDataExtensionTools } from "./sfmc_data_extension_tools.js";
 import { registerAssetTools } from "./sfmc_asset_tools.js";
 import { registerCampaignTools } from "./sfmc_campaign_tools.js";
+import { registerFolderTools } from "./sfmc_folder_tools.js";
 import { Request, Response } from "express";
 import dotenv from "dotenv";
 
@@ -61,6 +62,9 @@ function getServer()
 
     // Register Campaign tools
     registerCampaignTools(server, sfmcClient);
+
+    // Register Folder tools
+    registerFolderTools(server, sfmcClient);
 
     return server;
 }
