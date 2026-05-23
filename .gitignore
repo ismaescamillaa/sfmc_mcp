@@ -29,3 +29,11 @@ coverage/
 
 .vscode/mcp.json
 .env
+
+# Research artifacts from docs-fetch subagent
+.playwright-mcp/
+api_response.json
+page1.md
+page3_summary.md
+page_screenshot.png
+page_source.html
